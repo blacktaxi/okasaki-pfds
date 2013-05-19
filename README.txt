@@ -1,0 +1,1 @@
+Hi, this is my little repo for sharing and discussing solutions to exercises from Purely Functional Data Structures by Chris Okasaki.
