@@ -135,36 +135,19 @@ module Ex26 =
 
         let empty = E
 
-        let lookup (key, map) =
-            let rec auxLeft = function
-                | (_, E) -> raise KeyNotFound
-                | (x, T (a, { Key = y; Value = v}, b)) ->
-                    if x < y then auxLeft (x, a)
-                    else if y < x then auxRight (x, b)
-                    else v
-            and auxRight = function
-                | (_, E) -> raise KeyNotFound
-                | (x, T (a, { Key = y; Value = v }, b)) ->
-                    if y < x then auxRight (x, b)
-                    else if x < y then auxLeft (x, a)
-                    else v
-            in auxLeft (key, map)
+        let rec lookup = function
+            | (_, E) -> raise KeyNotFound
+            | (x, T (a, { Key = y; Value = v}, b)) ->
+                if x < y then lookup (x, a)
+                else if y < x then lookup (x, b)
+                else v
 
-        let bind (key, value, map) =
-            let rec auxLeft = function
-                | (x, E) -> T (E, { Key = x; Value = value }, E)
-                | (x, T (a, { Key = y; Value = v }, b)) ->
-                    if x < y then T (auxLeft (x, a), { Key = y; Value = v }, b)
-                    else if y < x then T (a, { Key = y; Value = v }, auxRight (x, b))
-                    else T (a, { Key = y; Value = v }, b)
-            and auxRight = function
-                | (x, E) -> T (E, { Key = x; Value = value }, E)
-                | (x, T (a, { Key = y; Value = v }, b)) ->
-                    if y < x then T (a, { Key = y; Value = v }, auxRight (x, b))
-                    else if x < y then T (auxLeft (x, a), { Key = y; Value = v }, b)
-                    else T (a, { Key = y; Value = v }, b)
-            in auxLeft (key, map)
-        
+        let rec bind = function
+            | (key, value, E) -> T (E, { Key = key; Value = value }, E)
+            | (key, value, T (a, { Key = y; Value = v }, b)) ->
+                if key < y then T (bind (key, value, a), { Key = y; Value = v }, b)
+                else if y < key then T (a, { Key = y; Value = v }, bind (key, value, b))
+                else T (a, { Key = y; Value = v }, b)
         
 module Tests =
     open Microsoft.VisualStudio.TestTools.UnitTesting
