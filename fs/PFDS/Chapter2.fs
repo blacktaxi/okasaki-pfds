@@ -115,8 +115,17 @@ module Ex25 =
         | (_, 0) -> E
         | (x, d) -> let t = complete (x, d - 1) in T (t, x, t)
 
-    let rec completeSize n =
-        raise <| NotImplementedException()
+    let rec completeSize = function
+        | (_, 0) -> E
+        | (x, n) ->
+            let rec create2 = function
+                | 0 -> E, T (E, x, E)
+                | n -> let left, right = create2 (n / 2) in
+                       if (n % 2 <> 0) then T (left, x, left), T (left, x, right)
+                       else T (left, x, right), T (right, x, right)
+            let left, right = create2 ((n - 1) / 2) in
+            if ((n - 1) % 2 <> 0) then T (left, x, right)
+            else T (left, x, left)
 
 /// Exercise 2.6 Adapt the UnbalancedSet functor to support finite maps rather
 /// than sets. Figure 2.10 gives a minimal signature for finite maps. (Note that the
