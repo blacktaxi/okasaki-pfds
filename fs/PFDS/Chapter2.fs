@@ -42,21 +42,16 @@ module Ex21 =
 module Ex22 =
     open OriginalSet
 
-    let member' (x, t) =
-        let rec auxLeft = function
-            | E -> false
-            | T (a, y, b) ->
-                if x < y then auxLeft a
-                else if x > y then auxRight b
-                else true
-        and auxRight = function
-            | E -> false
-            | T (a, y, b) ->
-                if x > y then auxRight b
-                else if x < y then auxLeft a
-                else true
-        in auxLeft t
-
+    let member' = function
+        | (_, E) -> false
+        | (x, (T (_, y, _) as t)) ->
+            let rec aux = function
+                | (candidate, E) -> x = candidate
+                | (candidate, T (a, y, b)) -> 
+                    if x < y then aux (candidate, a)
+                    else aux (y, b)
+            in aux (y, t)
+                
 /// Exercise 23 Inserting an existing element into a binary search tree copies the
 /// entire search path even though the copied nodes are indistinguishable from the
 /// originals. Rewrite insert using exceptions to avoid this copying. Establish only
@@ -85,22 +80,19 @@ module Ex24 =
 
     exception ElementAlreadyInSet
 
-    let insert (x, t) =
-        let rec insertLeft = function
-            | (x, E) -> T (E, x, E)
-            | (x, (T (a, y, b) as s)) ->
-                if x < y then T (insertLeft (x, a), y, b)
-                else if x > y then T (a, y, insertRight (x, b))
-                else raise ElementAlreadyInSet
-        and insertRight = function
-            | (x, E) -> T (E, x, E)
-            | (x, (T (a, y, b) as s)) ->
-                if x > y then T (a, y, insertRight (x, b))
-                else if x < y then T (insertLeft (x, a), y, b)
-                else raise ElementAlreadyInSet
-        try
-            insertLeft (x, t)
-        with | ElementAlreadyInSet -> t
+    let insert = function
+        | (x, E) -> T (E, x, E)
+        | (x, (T (_, y, _) as t)) ->
+            let rec aux = function
+                | (candidate, E) -> 
+                    if x = candidate then raise ElementAlreadyInSet
+                    else T (E, x, E)
+                | (candidate, T (a, y, b)) -> 
+                    if x < y then T (aux (candidate, a), y, b)
+                    else T (a, y, aux (y, b))
+            in 
+                try aux (y, t)
+                with | ElementAlreadyInSet -> t
 
 /// Exercise 2.5 Sharing can also be useful within a single object, not just be-
 /// tween objects. For example, if the two subtrees of a given node are identical,
