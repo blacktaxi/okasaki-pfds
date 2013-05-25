@@ -59,6 +59,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Chapter2.fs" />
+    <Compile Include="Chapter3.fs" />
     <None Include="App.config" />
     <None Include="packages.config" />
   </ItemGroup>
