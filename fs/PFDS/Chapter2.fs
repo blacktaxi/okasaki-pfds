@@ -158,7 +158,8 @@ module Ex26 =
                 else if y < key then T (a, { Key = y; Value = v }, bind (key, value, b))
                 else T (a, { Key = y; Value = v }, b)
         
-module Tests =
+/// Tests for chapter 2
+module Tests2 =
     open Microsoft.VisualStudio.TestTools.UnitTesting
     open FsUnit.MsTest
     open System.Linq
@@ -204,23 +205,29 @@ module Tests =
                 for i in items do
                     mem (i, tree) |> should be True
 
-        [<TestMethod>] member x.``original impl`` () =
+        [<TestMethod>] 
+        member x.``original Set impl`` () =
             genericImplTest (OriginalSet.insert, OriginalSet.member', OriginalSet.empty)
 
-        [<TestMethod>] member x.``exercise 2.1`` () =
+        [<TestMethod>] 
+        member x.``exercise 2.1`` () =
             Ex21.suffixes [1; 2; 3; 4] |> should equal [[1; 2; 3; 4]; [2; 3; 4]; [3; 4]; [4]; []]
             Ex21.suffixes [] |> should equal [[]]
 
-        [<TestMethod>] member x.``exercise 2.2`` () =
+        [<TestMethod>] 
+        member x.``exercise 2.2`` () =
             genericImplTest (OriginalSet.insert, Ex22.member', OriginalSet.empty)
 
-        [<TestMethod>] member x.``exercise 2.3`` () =
+        [<TestMethod>] 
+        member x.``exercise 2.3`` () =
             genericImplTest (Ex23.insert, OriginalSet.member', OriginalSet.empty)
 
-        [<TestMethod>] member x.``exercise 2.4`` () =
+        [<TestMethod>] 
+        member x.``exercise 2.4`` () =
             genericImplTest (Ex24.insert, OriginalSet.member', OriginalSet.empty)
             
-        [<TestMethod>] member x.``exercise 2.5a`` () =
+        [<TestMethod>] 
+        member x.``exercise 2.5a`` () =
             let mem = OriginalSet.member'
 
             mem (5, Ex25.complete (5, 0)) |> should be False
@@ -229,7 +236,8 @@ module Tests =
             mem (5, Ex25.complete (5, 1000)) |> should be True
             mem (6, Ex25.complete (5, 1000)) |> should be False
 
-        [<TestMethod>] member x.``exercise 2.5b`` () =
+        [<TestMethod>] 
+        member x.``exercise 2.5b`` () =
             let mem = OriginalSet.member'
 
             mem (5, Ex25.completeSize (5, 0)) |> should be False
@@ -240,7 +248,8 @@ module Tests =
 
             // @TODO test for balance
 
-        [<TestMethod>] member x.``exercise 2.6`` () =
+        [<TestMethod>] 
+        member x.``exercise 2.6`` () =
             let empty, lookup, bind = Ex26.FiniteMap.empty, Ex26.FiniteMap.lookup, Ex26.FiniteMap.bind
 
             // @TODO doesn't work :/
