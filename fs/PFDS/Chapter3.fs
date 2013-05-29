@@ -129,6 +129,14 @@ module Ex34c =
         | (h, E) -> h
         | (E, h) -> h   
         | ((T (_, x, a1, b1) as h1), (T (_, y, a2, b2) as h2)) ->
+//            let x', l', r', h' =
+//                if x <= y then (x, a1, b1, h2)
+//                else (y, a2, b2, h1)
+//            let l'', r'' =
+//                if rank l' >= rank r' + rank h' then (l', merge (r', h'))
+//                else (merge (r', h'), l')
+//            T (rank h1 + rank h2, x', l'', r'')
+
             let x', a, b = 
                 if x <= y then x, a1, merge (b1, h2)
                 else y, a2, merge (h1, b2)
