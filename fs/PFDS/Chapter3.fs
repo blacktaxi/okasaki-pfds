@@ -86,17 +86,8 @@ module Ex33 =
 //
 // (b) Modify the implementation in Figure 3.2 to obtain weight-biased leftist
 // heaps.
-//
-// (c) Currently, merge operates in two passes: a top-down pass consisting of
-// calls to merge, and a bottom-up pass consisting of calls to the helper
-// function makeT. Modify merge for weight-biased leftist heaps to operate
-// in a single, top-down pass.
 module Ex34b =
     open LeftistHeap
-
-    let rec heapSize = function
-        | E -> 0
-        | T (_, _, a, b) -> 1 + (heapSize a) + (heapSize b)
 
     let makeT (x, a, b) =
         if rank a >= rank b then T (rank a + rank b + 1, x, a, b)
@@ -107,24 +98,53 @@ module Ex34b =
         | E -> true
         | _ -> false
 
-//    let rec merge = function
-//        | (h, E) -> h
-//        | (E, h) -> h
-//        | ((T (_, x, a1, b1) as h1), (T (_, y, a2, b2) as h2)) ->
-//            if x <= y then makeT (x, a1, merge (b1, h2))
-//            else makeT (y, a2, merge (h1, b2))
-    let merge (x, h) = failwith "not implemented"
+    let rec merge = function
+        | (h, E) -> h
+        | (E, h) -> h
+        | ((T (_, x, a1, b1) as h1), (T (_, y, a2, b2) as h2)) ->
+            if x <= y then makeT (x, a1, merge (b1, h2))
+            else makeT (y, a2, merge (h1, b2))
 
     let insert (x, h) = merge (T (1, x, E, E), h)
 
-    let findMin = function
-        | E -> raise Empty
-        | T (_, x, a, b) -> x
+    let findMin = LeftistHeap.findMin
 
     let deleteMin = function
         | E -> raise Empty
         | T (_, x, a, b) -> merge (a, b)
 
+// (c) Currently, merge operates in two passes: a top-down pass consisting of
+// calls to merge, and a bottom-up pass consisting of calls to the helper
+// function makeT. Modify merge for weight-biased leftist heaps to operate
+// in a single, top-down pass.
+module Ex34c =
+    open LeftistHeap
+
+    let empty = E
+    let isEmpty = function
+        | E -> true
+        | _ -> false
+
+    let merge = function
+        | (h, E) -> h
+        | (E, h) -> h   
+        | ((T (_, x, a1, b1) as h1), (T (_, y, a2, b2) as h2)) ->
+            let x', a, b = 
+                if x <= y then x, a1, merge (b1, h2)
+                else y, a2, merge (h1, b2)
+            let l, r = 
+                if rank a >= rank b then a, b
+                else b, a
+            // @TODO is this really only top-down??
+            T (rank l + rank r + 1, x', l, r)
+
+    let insert (x, h) = merge (T (1, x, E, E), h)
+
+    let findMin = LeftistHeap.findMin
+
+    let deleteMin = function
+        | E -> raise Empty
+        | T (_, x, a, b) -> merge (a, b)
 
 /// Tests for chapter 3
 module Tests3 =
@@ -163,6 +183,15 @@ module Tests3 =
                 testLeftist a && testLeftist b &&
                     (rank a >= rank b)
 
+        let testWeightBasedSize fromList size =
+            let rec actualSize = function
+                | E -> 0
+                | T (_, _, a, b) -> 1 + (actualSize a) + (actualSize b)
+            
+            for l in Seq.map (fun _ -> randomItems 500) [1..100] do
+                let h = fromList l
+                size h |> should equal (actualSize h)
+            
         let testCompleteImpl (empty : Heap<_>, isEmpty, merge, insert, findMin, deleteMin) =
             let fromList xs = List.fold (fun h i -> insert (i, h)) empty xs
 
@@ -243,3 +272,18 @@ module Tests3 =
             testCompleteImpl 
                 (Ex34b.empty, Ex34b.isEmpty, Ex34b.merge, 
                 Ex34b.insert, Ex34b.findMin, Ex34b.deleteMin)
+
+            testWeightBasedSize
+                (fun xs -> List.fold (fun h i -> Ex34b.insert (i, h)) E xs)
+                (LeftistHeap.rank)
+
+        [<TestMethod>]
+        member x.``exercise 3.4c`` () =
+            testCompleteImpl 
+                (Ex34c.empty, Ex34c.isEmpty, Ex34c.merge, 
+                Ex34c.insert, Ex34c.findMin, Ex34c.deleteMin)
+
+            testWeightBasedSize
+                (fun xs -> List.fold (fun h i -> Ex34c.insert (i, h)) E xs)
+                (LeftistHeap.rank)
+
