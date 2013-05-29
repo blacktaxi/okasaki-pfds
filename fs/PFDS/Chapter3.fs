@@ -136,7 +136,7 @@ module Ex34c =
                 if rank a >= rank b then a, b
                 else b, a
             // @TODO is this really only top-down??
-            T (rank l + rank r + 1, x', l, r)
+            T (rank h1 + rank h2, x', l, r)
 
     let insert (x, h) = merge (T (1, x, E, E), h)
 
