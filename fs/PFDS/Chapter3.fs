@@ -166,7 +166,7 @@ module Ex34c =
 //   • A binomial tree of rank r + 1 is formed by linking two binomial trees of
 //     rank r, making one tree the leftmost child of the other.
 // From this definition, it is easy to see that a binomial tree of rank r contains
-// exactly 2r nodes. There is a second, equivalent definition of binomial trees
+// exactly 2^r nodes. There is a second, equivalent definition of binomial trees
 // that is sometimes more convenient: a binomial tree of rank r is a node with
 // r children t1 ... tr, where each ti is a binomial tree of rank r —  i. 
 //
