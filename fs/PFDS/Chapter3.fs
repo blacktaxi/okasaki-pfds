@@ -160,6 +160,91 @@ module Ex34c =
         | E -> raise Empty
         | T (_, x, a, b) -> merge (a, b)
 
+// Binomial heaps are composed of more primitive objects known as binomial
+// trees. Binomial trees are inductively defined as follows:
+//   • A binomial tree of rank 0 is a singleton node.
+//   • A binomial tree of rank r + 1 is formed by linking two binomial trees of
+//     rank r, making one tree the leftmost child of the other.
+// From this definition, it is easy to see that a binomial tree of rank r contains
+// exactly 2r nodes. There is a second, equivalent definition of binomial trees
+// that is sometimes more convenient: a binomial tree of rank r is a node with
+// r children t1 ... tr, where each ti is a binomial tree of rank r —  i. 
+//
+//   Rank 0   Rank 1   Rank 2    Rank 3
+//     .        .         .       __.
+//              |        /|      / /|
+//              .       . .     . . .
+//                      |      /| |
+//                      .     . . .
+//                            |
+//                            .
+module BinomialHeap =
+    type Tree<'T when 'T : comparison> = Node of int * 'T * Tree<'T> list
+    type Heap<'T when 'T : comparison> = Tree<'T> list
+
+    let empty = []
+    let isEmpty = function | [] -> true | _ -> false
+
+    let rank (Node (r, _, _)) = r
+    let root (Node (_, x, _)) = x
+
+    // Each list of children is maintained in decreasing order of rank, and elements
+    // are stored in heap order. We maintain heap order by always linking trees with
+    // larger roots under trees with smaller roots.
+    let link (Node (r, x1, c1) as t1, (Node (_, x2, c2) as t2)) =
+        if x1 <= x2 then Node (r + 1, x1, t2 :: c1)
+        else Node (r + 1, x2, t1 :: c2)
+
+    let rec insTree = function
+        | t, [] -> [t]
+        | t, (t' :: ts' as ts) ->
+            if rank t < rank t' then t :: ts
+            else insTree (link (t, t'), ts')
+
+    // Insert and merge are defined in loose analogy to incrementing or
+    // adding binary numbers. To insert
+    // a new element into a heap, we first create a new singleton tree (i.e., a binomial
+    // tree of rank 0). We then step through the existing trees in increasing order of
+    // rank until we find a missing rank, linking trees of equal rank as we go. Each
+    // link corresponds to a carry in binary arithmetic.
+    let insert (x, ts) = insTree (Node (0, x, []), ts)
+
+    // To merge two heaps, we step through both lists of trees in increasing order
+    // of rank, linking trees of equal rank as we go. Again, each link corresponds to
+    // a carry in binary arithmetic.    
+    let rec merge = function
+        | ts1, [] -> ts1 | [], ts2 -> ts2
+        | t1 :: ts1' as ts1, (t2 :: ts2' as ts2) ->
+            if rank t1 < rank t2 then t1 :: merge (ts1', ts2)
+            else if rank t2 < rank t1 then t2 :: merge (ts1, ts2')
+            else insTree (link (t1, t2), merge (ts1', ts2'))
+
+    // Both findMin and deleteMin call an auxiliary function removeMinTree that
+    // finds the tree with the minimum root and removes it from the list, returning
+    // both the tree and the remaining list.
+    let rec removeMinTree = function
+        | [t] -> (t, [])
+        | t :: ts ->
+            let t', ts' = removeMinTree ts
+            if root t <= root t' then (t, ts)
+            else (t', t :: ts')
+        | [] -> failwith "invalid argument"
+
+    let findMin ts =
+        let t, _ = removeMinTree ts
+        root t
+
+    // After discarding the root of the ex-
+    // tracted tree, we must somehow return the children of the discarded node to the
+    // remaining list of trees. Note that each list of children is almost a valid binomial
+    // heap. Each is a collection of heap-ordered binomial trees of unique rank, but
+    // in decreasing rather than increasing order of rank. Thus, we convert the list of
+    // children into a valid binomial heap by reversing it and then merge this list with
+    // the remaining trees.
+    let deleteMin ts =
+        let Node (_, x, ts1), ts2 = removeMinTree ts
+        merge (List.rev ts1, ts2)
+
 /// Tests for chapter 3
 module Tests3 =
     open Microsoft.VisualStudio.TestTools.UnitTesting
