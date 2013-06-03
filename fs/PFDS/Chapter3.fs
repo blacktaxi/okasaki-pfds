@@ -245,6 +245,75 @@ module BinomialHeap =
         let Node (_, x, ts1), ts2 = removeMinTree ts
         merge (List.rev ts1, ts2)
 
+// Exercise 3.5 Define findMin directly rather than via a call to removeMinTree.
+module Ex35 =
+    open BinomialHeap
+
+    let rec findMin = function
+        | [t] -> t
+        | t :: ts ->
+            let t' = findMin ts
+            if root t <= root t' then t
+            else t'
+        | [] -> failwith "invalid argument"
+
+// Exercise 3.6 Most of the rank annotations in this representation of binomial
+// heaps are redundant because we know that the children of a node of rank r
+// have ranks r - 1,... , 0. Thus, we can remove the rank annotations from each
+// node and instead pair each tree at the top-level with its rank, i.e.,
+//   datatype Tree = Node of Elem x Tree list
+//   type Heap = (int x Tree) list
+// Reimplement binomial heaps with this new representation.
+module Ex36 =
+    type Tree<'T when 'T : comparison> = Node of 'T * Tree<'T> list
+    type Heap<'T when 'T : comparison> = (int * Tree<'T>) list
+
+    let empty = []
+    let isEmpty = function | [] -> true | _ -> false
+
+    let rank (Node (_, ts)) = (List.length ts) - 1 // @NOTE no?
+    let root (Node (x, _)) = x
+
+    let heapOfList ts = ts |> List.map (fun x -> rank x, x)
+
+    let link (Node (x1, c1) as t1, (Node (x2, c2) as t2)) =
+        if x1 <= x2 then Node (x1, t2 :: c1)
+        else Node (x2, t1 :: c2)
+
+    let rec insTree : Tree<'T> * Heap<'T> -> Heap<'T> = function
+        | t, [] -> [rank t, t]
+        | t, ((r', t') :: ts' as ts) ->
+            let r = rank t
+            if r < r' then (r, t) :: ts
+            else insTree (link (t, t'), ts')
+
+    let insert (x, ts) = insTree (Node (x, []), ts)
+
+    let rec merge : Heap<'T> * Heap<'T> -> Heap<'T> = function
+        | ts1, [] -> ts1 | [], ts2 -> ts2
+        | (r1, t1) :: ts1' as ts1, ((r2, t2) :: ts2' as ts2) ->
+            if r1 < r2 then (r1, t1) :: merge (ts1', ts2)
+            else if r2 < r1 then (r2, t2) :: merge (ts1, ts2')
+            else insTree (link (t1, t2), merge (ts1', ts2'))
+
+    let rec removeMinTree = function
+        | [t] -> (t, [])
+        | t :: ts ->
+            let t', ts' = removeMinTree ts
+            if root t <= root t' then (t, ts)
+            else (t', t :: ts')
+        | [] -> failwith "invalid argument"
+
+    let findMin ts =
+        let t, _ = removeMinTree ts
+        root t
+
+    let deleteMin ts =
+        let Node (x, ts1), ts2 = removeMinTree ts
+        merge (heapOfList <| List.rev ts1, heapOfList ts2)
+
+
+
 /// Tests for chapter 3
 module Tests3 =
     open Microsoft.VisualStudio.TestTools.UnitTesting
